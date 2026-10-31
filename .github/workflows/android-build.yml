@@ -1,1 +1,53 @@
-a
+name: Build Android APK
+
+# Trigger manually from the Actions tab, or on every push to your branch.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "**" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required SDK platform, NDK and CMake
+        run: |
+          sdkmanager --install "platforms;android-36"
+          sdkmanager --install "ndk;29.0.14206865"
+          sdkmanager --install "cmake;3.22.1"
+
+      - name: Copy game data into Android assets
+        run: |
+          ASSETS=Oxygen/sonic3air/build/_android/app/src/main/assets
+          mkdir -p "$ASSETS"
+          cp -r Oxygen/sonic3air/data "$ASSETS/"
+          cp -r Oxygen/sonic3air/scripts "$ASSETS/"
+          cp Oxygen/sonic3air/config.json "$ASSETS/"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x Oxygen/sonic3air/build/_android/gradlew
+
+      - name: Build debug APK
+        working-directory: Oxygen/sonic3air/build/_android
+        run: ./gradlew assembleDebug --stacktrace
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/29.0.14206865
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonic3air-android-debug
+          path: Oxygen/sonic3air/build/_android/app/build/outputs/apk/debug/*.apk
