@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04   # pinned for a predictable preinstalled Android SDK layout
 
     steps:
       - name: Checkout repository
@@ -20,14 +20,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
+      # ubuntu-latest runners already ship a full Android SDK at $ANDROID_SDK_ROOT
+      # with its own cmdline-tools/sdkmanager, so we use that directly instead of
+      # the android-actions/setup-android action (its bootstrap currently fails
+      # trying to install the long-removed legacy 'tools' package).
       - name: Install required SDK platform, NDK and CMake
         run: |
-          sdkmanager --install "platforms;android-36"
-          sdkmanager --install "ndk;29.0.14206865"
-          sdkmanager --install "cmake;3.22.1"
+          SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -name sdkmanager -type f | sort -V | tail -1)"
+          echo "Using sdkmanager: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses || true
+          "$SDKMANAGER" "platforms;android-36"
+          "$SDKMANAGER" "ndk;29.0.14206865"
+          "$SDKMANAGER" "cmake;3.22.1"
 
       - name: Copy game data into Android assets
         run: |
