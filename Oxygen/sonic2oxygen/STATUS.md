@@ -12,6 +12,34 @@ Requires the player's own legally-dumped Sonic 2 ROM. No Sonic 3 ROM is
 referenced anywhere -- the ROM requirement in `oxygenproject.json` is pure
 per-project config, not hardcoded into the engine.
 
+## Design principle: S3K-exclusive features are opt-in toggles, not cut
+Decided explicitly (not a default-strip-everything-S3K approach): anything
+from S3K that's genuinely desirable content -- Super Flickies, elemental
+shields, etc. -- stays in the project and should eventually become a
+player-facing settings toggle, not get deleted. The whole point of this
+project is giving modders more than RSDK ever could, not recreating RSDK's
+limits under a new engine.
+
+The ONLY category that gets removed outright is stuff with literally no
+Sonic 2 equivalent to toggle on top of -- e.g. `giantring.lemon` (Giant
+Ring special-stage portal: S2 enters special stages via a ring-count
+checkpoint, there's no level object to attach a toggle to in the first
+place, nothing to turn on).
+
+IMPORTANT DISTINCTION -- "kept" != "toggle exists yet":
+Currently, kept S3K features (superflickies.lemon, shields.lemon's
+elemental part, capsule.lemon) are DORMANT: the code compiles but nothing
+in S2's object layouts ever triggers it, since no setting/menu exists yet
+to turn it on. Making one an actual player-facing toggle requires three
+real pieces of work, not yet done for any feature:
+  1. A setting definition (defines_settings.lemon is copied over, ready)
+  2. Logic that checks the setting and conditionally spawns/enables the
+     feature (e.g. Super form spawning flickies only if enabled)
+  3. An actual menu entry exposing it (menus/ for structure; the visual
+     rendering of that entry is C++, not lemon -- unexplored so far)
+This is real, separately-scoped work per feature, to be done as its own
+task list, not something that happens automatically by leaving files in.
+
 ## Kept as-is from S3AIR (reused wholesale)
 - `_defines/`, `utility/`, `general/` (minus Blue Sphere)
 - `maingame/` incl. `character/`, `hud/` (minus Knuckles cutscene, minus outro)
