@@ -44,14 +44,38 @@ code too, not just scripts. Not yet investigated where.
 - `oxygenproject.json` -- ROM checksum is a placeholder; fill in once you've
   verified your own dump
 
+## RESOLVED: object layout conversion pipeline works
+`tools/convert_object_layout.py` parses s2disasm's native 6-byte object
+layout format (verified against the real ChkLoadObj decoder at s2.asm
+~line 33650, not guessed from wiki docs) and emits
+`LevelObjectTableBuilder.addObject(...)` calls -- the same human-authored
+format S3AIR itself uses for its standalone build (see
+`scripts/standalone/resources/level_objects/levelobjects_01_aiz.lemon` for
+the original). Turns out we didn't need to reverse-engineer the
+`data/rawdata/*/layout_actN.bin` ROM-injection format at all -- that's a
+different, ROM-compatibility-mode path we don't need for the standalone
+build.
+
+Ran it for real: `scripts/standalone/resources/level_objects_converted/`
+has `levelobjects_01_ehz_act1_RAW.lemon` (135 objects) and
+`..._act2_RAW.lemon` (165 objects), converted from s2disasm's actual
+`EHZ_1.bin` / `EHZ_2.bin`. All object IDs resolved to real names (Ring,
+Monitor, Buzzer, Masher, Coconuts, Spring, Spikes, EHZWaterfall, etc.) with
+zero unknowns.
+
+**"RAW" means**: x/y/id/subtype/flip-flags are correct and real. What's
+NOT done yet: these numeric IDs (e.g. `0x4b` = Buzzer) don't correspond to
+any object *behavior* script yet -- there's no `objects/01_ehz/buzzer.lemon`
+for the engine to dispatch to. That's the next layer of work, zone by zone,
+object by object -- not a data problem anymore, a "write the object's
+actual lemonscript logic" problem.
+
 ## Not yet checked
-- Whether `main_oxygen.lemon` / `standalone/mainmenu/` compile cleanly with
-  no menu scripts present (likely needs edits to boot straight into a
-  debug/single-zone mode rather than a title screen)
-- The `layout_actN.bin` binary format Oxygen's object-spawning system
-  expects, vs. s2disasm's native object layout table format -- next
-  concrete task, needed before Emerald Hill's object placement can be
-  authored
+- Whether `main_oxygen.lemon` / `standalone/mainmenu/` compile cleanly as-is
+  (likely needs edits to boot straight into a debug/single-zone mode rather
+  than a full title screen flow, since zone-select content is still S3K's)
+- Ring layout conversion (separate from object layout -- s2disasm stores
+  rings in their own table, same general idea, not yet looked at)
 
 ## Milestone 1 target
 Emerald Hill Zone Act 1, fully playable: player physics ported from
