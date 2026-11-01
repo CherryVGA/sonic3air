@@ -176,16 +176,29 @@ movement/collision engine as correct-by-default going forward; anything
 that plays wrong during actual testing gets fixed then, against real
 in-game evidence, not guessed at in advance.
 
-**CORRECTION on Tails flight** (was asked about this directly): Tails CAN
-fly in Sonic 2 -- confirmed in s2disasm itself, `Obj02` (Tails' own object
-code), e.g. the "is Tails flying" check at s2.asm line 39018. This is
-original Sonic 2 content (how Tails reaches high places and can carry
-Sonic across gaps in 1P with AI Tails or 2P), not something that needs
-importing from S3K. Practical effect: we should port Sonic 2's own Obj02
-Tails logic (the authoritative, correct version for this project) rather
-than keep S3K's version, which will have its own era-specific tweaks we
-don't want. Not yet started -- this is real, not-yet-done work, separate
-from the physics-constants verification above.
+**RETRACTED -- Tails flight claim was wrong.** Originally claimed Tails
+can fly in the original Sonic 2, based on a comment in s2disasm
+(`btst #0,obj_control(a0) ; is Tails flying, or interacting with another
+object...`) at s2.asm line 39018. That comment is hedged and was
+misread as confirmation. The user tested the real original ROM directly
+in an emulator (Kega Fusion) and confirmed: Tails cannot fly in the
+original Sonic 2. Checked `Obj02_Modes` (Tails' movement state table) to
+verify why -- it only has four states: Normal, Air (airborne), Roll,
+Jump. No flying state exists at all. The obj_control bit in that comment
+is a generic "something else is controlling this object" flag shared by
+springs/pulleys/cutscenes, not a flight indicator.
+
+Flight (and carrying Sonic while flying) was added in later
+re-releases/remasters (Sonic Mania, mobile ports), not present in the
+original S2. This means: **Tails object logic (Obj02) should be ported
+as-is from s2disasm with NO flight capability**, matching the original
+game exactly. S3K's Tails flight code (which the project does carry,
+since Tails flies in S3K) is a real S3K feature we're keeping per the
+opt-in-toggle design principle above -- but it must default OFF / not
+exist for base Sonic 2 Tails, and should become one of the actual
+"S3K feature as a toggle" items (not a default), not something ported in
+by assumption. Lesson: verify gameplay claims against the real ROM/game,
+not just disassembly comments, when a comment itself hedges.
 
 **Practical conclusion**: milestone 1 does not need a physics "port" in
 the sense originally planned -- it needs a verification pass over the
