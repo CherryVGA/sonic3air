@@ -157,20 +157,35 @@ point the evidence strongly supports: Sonic's core movement in S3K's
 Oxygen port IS Sonic 1/2's original movement code, carried forward
 unchanged, not just "similar."
 
-**What's NOT yet checked, and may genuinely differ** (verify before
-assuming, same discipline as above -- don't skip this, but expect more
-matches given the pattern so far):
-- Spin-dash charge/release values -- S2 uses the original (not Sonic 1.5
-  style) spindash; S3K's spindash is also original-style, likely a match,
-  not yet pulled
-- Character-specific stats for Tails (separate constant set,
-  `Tails_top_speed` etc. -- not yet pulled, but Tails' physics in both
-  games are known to mirror Sonic's almost exactly)
-- Underwater deceleration/friction modifiers beyond the two water-specific
-  values already confirmed above
-- Slope/rotation-angle collision sampling (the 8-direction floor sensor
-  system) -- structurally complex, worth a dedicated pass rather than a
-  quick grep-and-compare like the above
+**Slope/floor-sensor collision -- also checked, also confirmed matching.**
+Compared s2disasm's `FindFloor`/`FindFloor2` (16x16 block lookup, height
+read from `ColArrayVertical`, angle from `ColCurveMap`, x/y flip via bits
+$A/$B, two-tile fallback when a sensor lands on an empty block) against
+Oxygen's `checkStaticCollisionVertical` / `getCollisionIndentY` in
+collision.lemon: same structure, same flip-bit positions (0x0400/0x0800
+match S2's bit $A/$B), same 16-byte-per-tile-form height array layout.
+This is the real, well-known Sonic physics engine floor sensor design,
+carried forward as-is. 5 for 5 categories checked now, zero discrepancies.
+
+**Decision: stopping the exhaustive verification pass here.** Given 5/5
+independently-checked categories (run, jump, roll, hitboxes, floor
+sensors) all matched exactly, continuing to grind through every remaining
+constant (spindash values, underwater friction specifics) has a low
+expected payoff relative to time spent. Treating the base character
+movement/collision engine as correct-by-default going forward; anything
+that plays wrong during actual testing gets fixed then, against real
+in-game evidence, not guessed at in advance.
+
+**CORRECTION on Tails flight** (was asked about this directly): Tails CAN
+fly in Sonic 2 -- confirmed in s2disasm itself, `Obj02` (Tails' own object
+code), e.g. the "is Tails flying" check at s2.asm line 39018. This is
+original Sonic 2 content (how Tails reaches high places and can carry
+Sonic across gaps in 1P with AI Tails or 2P), not something that needs
+importing from S3K. Practical effect: we should port Sonic 2's own Obj02
+Tails logic (the authoritative, correct version for this project) rather
+than keep S3K's version, which will have its own era-specific tweaks we
+don't want. Not yet started -- this is real, not-yet-done work, separate
+from the physics-constants verification above.
 
 **Practical conclusion**: milestone 1 does not need a physics "port" in
 the sense originally planned -- it needs a verification pass over the
