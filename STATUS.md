@@ -23,8 +23,21 @@ per-project config, not hardcoded into the engine.
 ## Deliberately stripped (S3K-only content, not reusable)
 - All 14 S3K zone folders under `level/` and `objects/`
 - `enemies/`, `bosses/` -- every file is a specific S3K creature/boss
-- `menus/` -- titlescreen, level select, competition mode: all S3K content
 - Blue Sphere special stage, competition mode, Knuckles-specific cutscene
+
+## CORRECTED: menus/ is kept whole, not stripped
+Originally dropped as "S3K content." Wrong -- confirmed by the user (an
+existing S3AIR modder): the menu/title flow is load-bearing, the game does
+not boot without it. Kept all of `menus/` (titlescreen, dataselect,
+levelselect, actselect, continuescreen, competition_menus, titlescreen_sk)
+for now. Trimming the genuinely S3K-only pieces (competition_menus.lemon,
+titlescreen_sk.lemon's S&K lock-on screen) is deferred until we can
+test-compile, not guessed at blind.
+
+Separately, and important for later: the menu *theme/rendering* (fonts,
+layout, visual skin) lives in the C++ engine layer, not lemonscript. Writing
+a Sonic 2-themed menu means touching `oxygenengine`/`sonic3air`'s C++ UI
+code too, not just scripts. Not yet investigated where.
 
 ## Scaffolded, not yet built
 - `level/01_ehz/`, `objects/01_ehz/` -- empty, this is milestone 1

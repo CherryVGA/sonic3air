@@ -12,6 +12,15 @@ include _defines/?
 // Utility
 include utility/?
 
+// Menus
+// CORRECTION: originally dropped entirely, which was wrong -- S3AIR will
+// not boot without these, the title/menu flow is load-bearing, not optional
+// content. Kept whole for now; trimming competition_menus.lemon (2P
+// competition mode) and titlescreen_sk.lemon (S&K lock-on cartridge screen)
+// is a later cleanup once we can actually test-compile, not a blind guess
+// made before anything runs.
+include menus/?
+
 // General stuff
 // NOTE: dropped general/bluesphere -- that's S3K's Blue Sphere special
 // stage, no Sonic 2 equivalent (S2 uses a half-pipe special stage instead,
@@ -45,12 +54,6 @@ include objects/01_ehz/?
 // folders is a specific S3K enemy/boss. Sonic 2's enemies (Buzzer, Masher,
 // Coconuts, etc.) and bosses are new content, to be written per zone
 // under objects/01_ehz/ etc., not reused from S3AIR.
-
-// NOTE: dropped menus/? entirely for now -- S3AIR's menu scripts
-// (titlescreen, level select, data select, competition menus) are deeply
-// S3K-content-specific (zone names, character roster, Blue Sphere).
-// Until we write our own, main_oxygen.lemon should boot straight into
-// debug mode / a single zone for testing.
 
 #if STANDALONE
 include standalone/?
