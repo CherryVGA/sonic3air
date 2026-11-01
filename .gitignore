@@ -1,0 +1,3 @@
+___internal/*.bin
+*.bin
+!data/rawdata/**/*.bin

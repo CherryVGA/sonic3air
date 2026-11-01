@@ -1,0 +1,36 @@
+{
+	// Metadata
+	"Identifier": "Sonic2Oxygen",
+	"ShortName":  "Sonic 2 Oxygen",
+	"FullName":   "Sonic the Hedgehog 2 (Oxygen Engine port)",
+
+	// ROM
+	// Fill in once you've verified your own legally-dumped Sonic 2 ROM.
+	// "size" should be 0x100000 (1 MB) for a standard Sonic 2 (W) REV01 ROM.
+	// Get the checksum by running the ROM through the engine once in dev mode,
+	// or compute it yourself -- do not paste one in from an online database.
+	"Rom":        "___internal/Sonic_The_Hedgehog_2.bin",
+	"RomCheck":   "size=0x100000, checksum=0x0000000000000000",
+
+	// Paths
+	"GameDataPath": "data",
+
+	// Scripts
+	"Scripts":
+	{
+		"MainScript": "main.lemon"
+	},
+
+	// Data packages -- mirrors sonic3air's structure; we'll build these
+	// from our own scripts/data rather than reusing S3AIR's compiled packages.
+	"DataPackages":
+	{
+		"enginedata.bin": { "Required": true },
+		"gamedata.bin":   { "Required": true },
+		"audiodata.bin":  { "Required": true }
+	}
+
+	// Deliberately no "Emulation" block: that's S3AIR's dev-time cross-check
+	// against the real S3K ROM's call stack addresses. We don't need it, and
+	// it would be meaningless against a Sonic 2 ROM anyway.
+}

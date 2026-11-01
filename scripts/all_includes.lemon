@@ -1,0 +1,61 @@
+/*
+	Sonic 2 Oxygen -- based on the shared engine layer of Sonic 3 A.I.R.'s
+	Oxygen Engine scripts (GPLv3, by Eukaryot and contributors).
+	Sonic 2 specific content is original work, written against the public
+	Sonic 2 disassembly (sonicretro/s2disasm) as a logic reference.
+*/
+
+
+// Defines
+include _defines/?
+
+// Utility
+include utility/?
+
+// General stuff
+// NOTE: dropped general/bluesphere -- that's S3K's Blue Sphere special
+// stage, no Sonic 2 equivalent (S2 uses a half-pipe special stage instead,
+// which we'll need to write from scratch later).
+include general/?
+
+// Main game
+// NOTE: dropped maingame/outro and cutscene_knuckles -- S3K-specific ending
+// content. maingame/character/ kept: Sonic's base movement is the part of
+// S3K's physics closest to S2's, and the main source we're porting into.
+include maingame/?
+include maingame/character/?
+include maingame/hud/?
+
+// Level update (shared logic only -- zone list starts empty)
+include level/?
+include level/01_ehz/?
+// Add more zones here as they're built:
+// include level/02_???/?
+
+// Objects (shared only -- zone list starts empty)
+include objects/?
+include objects/basics/?
+include objects/effects/?
+include objects/misc/?
+include objects/01_ehz/?
+// Add more zones here as they're built:
+// include objects/02_???/?
+
+// NOTE: dropped enemies/ and bosses/ wholesale -- every entry in both
+// folders is a specific S3K enemy/boss. Sonic 2's enemies (Buzzer, Masher,
+// Coconuts, etc.) and bosses are new content, to be written per zone
+// under objects/01_ehz/ etc., not reused from S3AIR.
+
+// NOTE: dropped menus/? entirely for now -- S3AIR's menu scripts
+// (titlescreen, level select, data select, competition menus) are deeply
+// S3K-content-specific (zone names, character roster, Blue Sphere).
+// Until we write our own, main_oxygen.lemon should boot straight into
+// debug mode / a single zone for testing.
+
+#if STANDALONE
+include standalone/?
+include standalone/mainmenu/?
+include standalone/rendering/?
+include standalone/resources/?
+include standalone/special/?
+#endif
