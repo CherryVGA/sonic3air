@@ -1,3 +1,8 @@
 ___internal/*.bin
 *.bin
 !data/rawdata/**/*.bin
+
+# tools/intermediate/ holds regenerated working output (e.g. Kosinski-
+# decompressed level data), not committed source -- regenerate via the
+# matching tool (e.g. tools/kosinski.py) against the committed .kos/.bin
+# source files in the s2disasm reference clone, not stored here.
