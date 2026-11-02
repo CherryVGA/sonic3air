@@ -206,6 +206,68 @@ remaining unchecked constants above, with corrections only where real
 differences turn up. This meaningfully de-scopes the hardest part of the
 original plan.
 
+## Level layout: real progress, but corrected a premature conclusion
+Investigated how to get Emerald Hill's actual terrain (not just object
+placement) into the engine. Three real, verified findings, plus one wrong
+conclusion caught before it got shipped as "done":
+
+**Confirmed real:**
+- s2disasm's `level/layout/EHZ_1.kos` / `EHZ_2.kos` are Kosinski-compressed
+  (confirmed via s2disasm's own `loadLevelLayout`, which calls
+  `JmpTo_KosDec` straight into a RAM buffer called `Level_Layout`).
+- `Level_Layout` is declared `ds.b $1000` (4096 bytes) at RAM address
+  `0xFFFF8000` (`RAM_Start=0xFFFF0000` + `Chunk_Table`'s `$8000` bytes).
+  Oxygen's own `maingame.lemon` targets the exact same size and address:
+  `copyMemory(0xffff8000, A0, 0x1000)`. Not a coincidence -- both engines
+  share this RAM convention, inherited from the same lineage.
+- Wrote `tools/kosinski.py`, a faithful line-by-line port of Oxygen's own
+  `scripts/general/kosinski.lemon` decompressor (not an external library,
+  not guessed -- copied from the real engine code, which is itself a port
+  of the original 68K routine). Ran it on both EHZ_1.kos and EHZ_2.kos:
+  decompressed cleanly to exactly 4096 bytes each with no errors, and the
+  output is visually consistent with real level data (repeating
+  background-chunk patterns like `f8 f9 fa fb` cycling, varied
+  foreground-like byte ranges elsewhere) -- not garbage.
+
+**WRONG, caught before committing as final:** initially concluded "same
+size + same address = same format, so the decompressed bytes can be used
+directly as the final rawdata file, no conversion needed." This was the
+same mistake pattern as the earlier Tails correction -- treating a strong
+partial match as full confirmation without checking the actual internal
+structure. Checked `defines_global.lemon`'s own documentation of that
+buffer and it's NOT a flat chunk-ID grid at all:
+  - `u16[0xffff8000]` = foreground width in chunks
+  - `u16[0xffff8002]` = background width in chunks
+  - `u16[0xffff8004]` = foreground height in chunks
+  - `u16[0xffff8006]` = background height in chunks
+  - from `0xffff8008` on: a POINTER TABLE -- two RAM addresses per level
+    row (one for that row's foreground chunk data, one for background),
+    not inline grid bytes.
+This is a header + per-row-pointer structure. Sonic 2's own `Level_Layout`
+format (foreground starting at offset 0, background at offset `+$80`,
+based on `LoadTilesAsYouMove`'s addressing) is a different, flatter
+convention. The two are NOT directly byte-compatible, despite matching
+size and address -- that match was real but didn't mean what it looked
+like it meant.
+
+**Moved, not deleted**: the Kosinski-decompressed output is real and
+useful (it's S2's genuine native-format level data), just not yet in the
+shape Oxygen's renderer expects. Relocated from
+`data/rawdata/zone01_ehz/layout_actN.bin` (which implied "finished,
+engine-ready") to `tools/intermediate/ehzN_layout_raw_s2format.bin`
+(explicitly labeled as an intermediate, S2-native-format artifact).
+Removed the `data/rawdata/levellayouts.json` config that pointed at the
+old location, since it would have pointed the engine at wrongly-formatted
+data otherwise.
+
+**Real next step, not yet done**: write a second-stage converter that
+reads the intermediate S2-format bytes (need to nail down S2's exact row
+stride/width-in-chunks and fg/bg split precisely, not just the `+$80`
+clue found so far) and re-encodes them into Oxygen's header + per-row
+RAM-pointer-table format, including writing the actual per-row chunk data
+somewhere in the output blob for the pointers to reference. This is real,
+scoped converter work -- not started.
+
 ## Milestone 1 target
 Emerald Hill Zone Act 1, fully playable: player physics ported from
 s2disasm, tile collision, rings, one spring, one monitor type, one enemy

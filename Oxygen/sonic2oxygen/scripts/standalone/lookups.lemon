@@ -10,35 +10,16 @@
 
 function string getZoneInitials(u8 zone)
 {
-	// This expects internal zone index
+	// This expects internal zone index.
+	// S3K's full 13-zone table replaced with our own as zones get built.
+	// Internal zone index assignment is OUR OWN convention (not tied to
+	// Sonic 2's own Current_Zone byte values from s2disasm -- those get
+	// mapped to this internal index elsewhere, not yet written).
 	if (zone == 0x00)
-		return "aiz"
-	if (zone == 0x01)
-		return "hcz"
-	if (zone == 0x02)
-		return "mgz"
-	if (zone == 0x03)
-		return "cnz"
-	if (zone == 0x05)
-		return "icz"
-	if (zone == 0x06)
-		return "lbz"
-	if (zone == 0x07)
-		return "mhz"
-	if (zone == 0x04)
-		return "fbz"
-	if (zone == 0x08)
-		return "soz"
-	if (zone == 0x09)
-		return "lrz"
-	if (zone == 0x16)
-		return "hpz"
-	if (zone == 0x0a)
-		return "ssz"
-	if (zone == 0x0b)
-		return "dez"
-	if (zone == 0x0c)
-		return "ddz"
+		return "ehz"	// Emerald Hill Zone -- milestone 1
+
+	// Not yet assigned: WZ, MTZ, CPZ, CNZ, HTZ, OOZ, MCZ, ARZ, SCZ, HPZ,
+	// WFZ, DEZ -- add as each zone gets built.
 	return ""
 }
 
