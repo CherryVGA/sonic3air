@@ -260,6 +260,13 @@ Removed the `data/rawdata/levellayouts.json` config that pointed at the
 old location, since it would have pointed the engine at wrongly-formatted
 data otherwise.
 
+CORRECTION to the above: `tools/intermediate/*.bin` is gitignored (caught
+after an earlier commit message wrongly implied these files were saved --
+they weren't, `.gitignore`'s blanket `*.bin` rule silently excluded them).
+Left that way deliberately: these are pure regenerable output, not source
+-- re-run `tools/kosinski.py` against the committed `.kos` files in the
+s2disasm reference clone to recreate them, same as any build artifact.
+
 **Real next step, not yet done**: write a second-stage converter that
 reads the intermediate S2-format bytes (need to nail down S2's exact row
 stride/width-in-chunks and fg/bg split precisely, not just the `+$80`
