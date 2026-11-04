@@ -305,14 +305,45 @@ intermediates. Wired up `data/rawdata/levellayouts.json` with the
 `ehz1_layout`/`ehz2_layout` keys (matching `lookups.lemon`'s zone-0 =
 "ehz" mapping set earlier).
 
-**Flagged, not glossed over**: the exact pixel-origin convention of
-`LevelSize`'s xend/yend (camera's own position vs. the far edge of the
-visible screen) has some residual rounding uncertainty -- used a
-deliberately safe overestimate (extra unused rows/columns are harmless;
-an underestimate would clip real content). This is UNTESTED -- there is
-no way to actually run the Oxygen engine in this environment to confirm
-the level renders correctly. Treat the header values as provisional until
-someone can load this in the real engine and look at it.
+**CORRECTED -- the width/height derivation was wrong, caught by the user
+quoting the actual documented dimensions** (EHZ act 1 = 88x10 chunks, act
+2 = 89x12, per Sonic Retro's wiki). My `LevelSize`-pixel-margin estimate
+gave 86x8 and 85x10 -- wrong on both counts. Investigated two derivation
+methods, both rejected:
+  1. **Camera-boundary pixels + one screen margin** (the original
+     approach): undershot. Per SCHG's own "Resize Levels in Sonic 2" doc,
+     `LevelSize`'s xend is deliberately set by the original developers to
+     an arbitrary point like "signpost/capsule position + $A0" -- it's a
+     camera-scroll-stop convention, not a measurement of the authored
+     level's true pixel extent. Not fixable with a better margin constant;
+     the quantity itself isn't what's needed.
+  2. **Scanning decompressed bytes for the last non-zero byte per row**
+     (tried next, as a more "direct from data" alternative): this
+     happened to get act 1's width right (88) but got height wrong (8
+     vs real 10). Root cause: it silently assumed chunk ID `0` means
+     "unused padding." That's not a safe assumption -- `0` can be a
+     legitimate chunk (e.g. a plain sky/background tile), so real rows
+     that happen to use only chunk ID 0 get misread as empty. The width
+     match was luck, not a validated method.
+
+**Fix applied**: `convert_level_layout.py` no longer tries to derive
+width/height at all -- it now takes them as required, explicit arguments
+that must come from an authoritative source (the wiki-documented
+dimensions, in this case), with the rejected methods and reasoning left
+in the docstring so this mistake doesn't get re-attempted blind. Reran
+for both acts with the correct values: `layout_act1.bin` (1808 bytes,
+88x10) and `layout_act2.bin` (2192 bytes, 89x12) -- note the real
+decompressed row data for the "extra" rows beyond what the old 8/10-row
+output included was already present in the decompressed buffer (all
+chunk ID 0 in those rows), just wrongly excluded before; nothing was
+invented to fill them in.
+
+**Still flagged as unverified**: this fixes the specific numbers caught
+so far, but the same categories of error (wrong dimensions for a
+not-yet-cross-checked zone/act, or some other S2/Oxygen format detail not
+yet found) could recur elsewhere. This is UNTESTED -- there is still no
+way to actually run the Oxygen engine in this environment. Real
+confirmation requires someone loading this in the actual engine.
 
 ## Milestone 1 target
 Emerald Hill Zone Act 1, fully playable: player physics ported from
