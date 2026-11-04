@@ -76,22 +76,32 @@ def parse_s2_layout(data):
     return fg_rows, bg_rows
 
 
-def chunks_needed(extent_px, chunk_px, screen_px):
-    """Safe (overestimate-biased) chunk count for a camera-bound extent."""
-    total_px = extent_px + screen_px  # camera bound + one screen of margin
-    return (total_px + chunk_px - 1) // chunk_px  # ceil division
-
-
-def build_oxygen_layout(fg_rows, bg_rows, xend_px, yend_px, load_address=0xffff8000):
+def build_oxygen_layout(fg_rows, bg_rows, width_chunks, height_chunks, load_address=0xffff8000):
     """
     Builds the full Oxygen-format blob: header + pointer table + row data,
     all self-contained (pointers reference offsets within this same blob,
     computed relative to load_address since that's where it lands in RAM).
+
+    width_chunks/height_chunks MUST be supplied by the caller from an
+    authoritative source (documented level dimensions), not derived here.
+    Two derivation attempts were tried and rejected as unreliable:
+      1. LevelSize's camera-boundary pixels (xend/yend) + one screen of
+         margin: undershot real width (got 86 vs real 88 for EHZ act 1).
+         Camera boundaries are deliberately NOT the same as real content
+         extent (per SCHG's own resize-levels doc: devs set xend to
+         "signpost/capsule position + $A0", an arbitrary margin, not a
+         measurement of the authored level's true size).
+      2. Scanning decompressed data for the last non-zero byte per
+         row/column: assumes chunk ID 0 means "unused padding," which is
+         not safe -- 0 could be a legitimate chunk (e.g. plain sky). This
+         is why it got width right by coincidence (88, matching real)
+         but height wrong (8 vs real 10) for EHZ act 1 -- rows that were
+         real but happened to use only chunk ID 0 got misread as empty.
     """
-    fg_width_chunks = chunks_needed(xend_px, CHUNK_SIZE_PX, SCREEN_WIDTH_PX)
-    bg_width_chunks = fg_width_chunks  # S2 doesn't track these separately in LevelSize
-    fg_height_chunks = chunks_needed(yend_px, CHUNK_SIZE_PX, SCREEN_HEIGHT_PX)
-    bg_height_chunks = fg_height_chunks
+    fg_width_chunks = width_chunks
+    bg_width_chunks = width_chunks
+    fg_height_chunks = height_chunks
+    bg_height_chunks = height_chunks
 
     num_rows_out = min(NUM_ROWS, max(fg_height_chunks, bg_height_chunks))
 
@@ -131,19 +141,21 @@ def build_oxygen_layout(fg_rows, bg_rows, xend_px, yend_px, load_address=0xffff8
 def main():
     if len(sys.argv) < 5:
         print("Usage: convert_level_layout.py <decompressed_s2_layout.bin> "
-              "<xend_hex> <yend_hex> <output.bin>")
-        print(__doc__)
+              "<width_chunks> <height_chunks> <output.bin>")
+        print("width_chunks/height_chunks must come from an authoritative "
+              "source (documented level dimensions), not guessed -- see "
+              "docstring for why two derivation attempts were rejected.")
         sys.exit(1)
 
     with open(sys.argv[1], "rb") as f:
         data = f.read()
 
-    xend_px = int(sys.argv[2], 16)
-    yend_px = int(sys.argv[3], 16)
+    width_chunks = int(sys.argv[2])
+    height_chunks = int(sys.argv[3])
     output_path = sys.argv[4]
 
     fg_rows, bg_rows = parse_s2_layout(data)
-    blob, info = build_oxygen_layout(fg_rows, bg_rows, xend_px, yend_px)
+    blob, info = build_oxygen_layout(fg_rows, bg_rows, width_chunks, height_chunks)
 
     with open(output_path, "wb") as f:
         f.write(blob)
