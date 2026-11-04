@@ -1,0 +1,15 @@
+{
+	// Level layout (chunk arrangement) overrides, loaded via
+	// Standalone.loadRawLevelData("%s_layout", ...) in maingame.lemon.
+	//
+	// Converted from s2disasm's native Level_Layout format (Kosinski-
+	// decompressed, then repacked into Oxygen's header + per-row
+	// RAM-pointer-table format) using tools/kosinski.py +
+	// tools/convert_level_layout.py. See STATUS.md for the full format
+	// writeup and a flagged uncertainty about exact chunk width/height
+	// (derived from s2disasm's LevelSize camera-boundary table, not yet
+	// verified against the running engine).
+
+	"ehz1_layout": { "File": "zone01_ehz/layout_act1.bin" },
+	"ehz2_layout": { "File": "zone01_ehz/layout_act2.bin" }
+}
