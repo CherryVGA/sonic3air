@@ -267,13 +267,52 @@ Left that way deliberately: these are pure regenerable output, not source
 -- re-run `tools/kosinski.py` against the committed `.kos` files in the
 s2disasm reference clone to recreate them, same as any build artifact.
 
-**Real next step, not yet done**: write a second-stage converter that
-reads the intermediate S2-format bytes (need to nail down S2's exact row
-stride/width-in-chunks and fg/bg split precisely, not just the `+$80`
-clue found so far) and re-encodes them into Oxygen's header + per-row
-RAM-pointer-table format, including writing the actual per-row chunk data
-somewhere in the output blob for the pointers to reference. This is real,
-scoped converter work -- not started.
+## RESOLVED: full level layout converter written and run on real EHZ data
+Picked this back up and nailed down the exact byte format on both sides,
+not just the address/size match from before:
+
+**S2's native format, confirmed via `GetAddressOfBlockInChunk`'s own
+comment** ("$100 = size of a row of FG and BG 128x128s in level layout
+table"): 16 rows x 0x100 (256) bytes. Per row: foreground chunk IDs at
+offset 0 (128 columns, 1 byte each), background chunk IDs at offset +0x80
+(128 columns, 1 byte each). This exactly explains the repeating patterns
+seen in the earlier hexdump (`f8 f9 fa fb` at absolute offset 0x80 = row
+0's background; `fc fd fe ff` at 0x180 = row 1's background).
+
+**Oxygen's format, confirmed via `getTileAtWorldPosition` in
+collision.lemon** (not just the defines_global.lemon comment -- traced
+the actual pointer-chasing code): `chunksBaseAddress+offset` gives a
+16-bit RAM address, `input.x >> 7` (column index) gets added directly to
+it, then `u8[...]` reads one byte. So each row's chunk data is STILL a
+flat byte array, 1 byte per chunk -- identical convention to S2. The only
+real difference is Oxygen stores an explicit pointer per row instead of
+using a fixed stride, which is why the earlier same-size/same-address
+conclusion was incomplete rather than simply wrong: the chunk ID VALUES
+need zero transformation, only the row layout needs repacking with a
+pointer table on top.
+
+**Width/height in chunks**: not stored in the layout table itself (always
+allocated at a fixed max size). Found s2disasm's own `LevelSize` table
+(s2.asm ~line 14763), which gives real per-act camera pixel boundaries:
+EHZ Act 1 = `xend 0x29A0, yend 0x320`; Act 2 = `xend 0x2940, yend 0x420`.
+Converted to chunks (boundary + one screen of margin, rounded up): Act 1
+= 86 wide x 8 tall; Act 2 = 85 wide x 10 tall.
+
+**Wrote `tools/convert_level_layout.py`** implementing the above, and ran
+it for real: `data/rawdata/zone01_ehz/layout_act1.bin` (1416 bytes) and
+`layout_act2.bin` (1748 bytes), built from the Kosinski-decompressed
+intermediates. Wired up `data/rawdata/levellayouts.json` with the
+`ehz1_layout`/`ehz2_layout` keys (matching `lookups.lemon`'s zone-0 =
+"ehz" mapping set earlier).
+
+**Flagged, not glossed over**: the exact pixel-origin convention of
+`LevelSize`'s xend/yend (camera's own position vs. the far edge of the
+visible screen) has some residual rounding uncertainty -- used a
+deliberately safe overestimate (extra unused rows/columns are harmless;
+an underestimate would clip real content). This is UNTESTED -- there is
+no way to actually run the Oxygen engine in this environment to confirm
+the level renders correctly. Treat the header values as provisional until
+someone can load this in the real engine and look at it.
 
 ## Milestone 1 target
 Emerald Hill Zone Act 1, fully playable: player physics ported from
